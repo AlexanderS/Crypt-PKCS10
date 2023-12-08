@@ -30,7 +30,7 @@ my @dirpath = (File::Spec->splitpath( $0 ))[0,1];
 
 my $decoded;
 
-plan  tests => 12;
+plan  tests => 13;
 
 # Basic functions test requires RSA
 
@@ -818,6 +818,38 @@ subtest 'API v0' => sub {
     ok( ref $csr->extensionValue('KeyUsage') eq '', 'KeyUsage is a scalar' );
 
     # More API v0 tests needed
+};
+
+subtest 'Empty KeyUsage' => sub {
+    plan tests => 4;
+
+    my $csr = << 'CSR';
+-----BEGIN CERTIFICATE REQUEST-----
+MIIC0jCCAboCAQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUx
+ITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMMldGjE22q7TrmCAXeS4zC1Q600CDj2RnOpEVgq
+r3BYlLmdB8IzwpONnDQeT3GgIhmi2Z4Og1FVCHU51x6M/QehcZympfKoNI15QF15
+U/cb/ABxhOwMJcELbCDFU3J6nvuLoXyZ7bwaghiTUEvmYRZ+VCjG3sPmP37//RqW
+vcpu+3kDV0d04VG/unm2WGCnj1dFM7zGmifJsG7Ju9QR/dhd7q2eW+H79MibDnfI
+KdOahS23jvdI1T+qNkTR7B/0Gv8rh4IaosvNnVUf41Aw8ZdzvXgThd90ObtIHpVu
+prYd1ecWIJr7tFft6UqZkawvMUys5dNTPjT29k6OkaT1ZBUCAwEAAaBIMEYGCSqG
+SIb3DQEJDjE5MDcwCQYDVR0TBAIwADALBgNVHQ8EBAMCAAAwHQYDVR0lBBYwFAYI
+KwYBBQUHAwEGCCsGAQUFBwMCMA0GCSqGSIb3DQEBCwUAA4IBAQCIxtsN7Z0YJyl9
+LBTQ9f9hNR+hGr41YNvYvA18zB10KdiynEkOTj0wyvYCaaMDxplujf4hSUHuE3GT
+0feW6VldDcGGGBkud4oz9z54sHMGkU5BCdUpSIW79oXYPmQ8Hm6edDf/lpYCvMX1
+aHM/Ic3sEVsg8cJ+MWI1gv3/gTbmJ4C7C1erHUQSu8hxTomFc2qA0fKlZA40herE
+rOQJQ7NiPe6sKEnDwwQuGlDcdSq+Kn8myKY382kscoQvwkuaIY5f8nUlrzs5OWFQ
+wVmQ3BMTvMG5A4qR5et77V5lwRnr8uQmzxzdYkLEunuevn5sJ69tBkd5uWifZIrS
+yUHyafDx
+-----END CERTIFICATE REQUEST-----
+CSR
+
+    ok( Crypt::PKCS10->setAPIversion(1), 'setAPIversion 1' );
+    $decoded = Crypt::PKCS10->new( $csr, PEMonly => 1, verifySignature => 0 );
+    isnt( $decoded, undef, 'load PEM from variable' ) or BAIL_OUT( Crypt::PKCS10->error );
+
+    isa_ok( $decoded, 'Crypt::PKCS10' ); # Make sure new objects are blessed
+    is_deeply( $decoded->extensionValue( 'keyUsage'), [], 'keyUsage array' );
 };
 
 

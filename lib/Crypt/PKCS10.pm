@@ -922,15 +922,18 @@ my %special;
      my $self = shift;
      my( $value, $id ) = @_;
 
+     my @usages;
      my $bit =  unpack('C*', @{$value}[0]); #get the decimal representation
-     my $length = int(log($bit) / log(2) + 1); #get its bit length
-     my @usages = reverse( $id eq 'KeyUsage'? # Following are in order from bit 0 upwards
-			   qw(digitalSignature nonRepudiation keyEncipherment dataEncipherment
-                              keyAgreement keyCertSign cRLSign encipherOnly decipherOnly) :
-			   qw(client server email objsign reserved sslCA emailCA objCA) );
-     my $shift = ($#usages + 1) - $length; # computes the unused area in @usages
+     if ($bit > 0) {
+         my $length = int(log($bit) / log(2) + 1); #get its bit length
+         @usages = reverse( $id eq 'KeyUsage'? # Following are in order from bit 0 upwards
+             qw(digitalSignature nonRepudiation keyEncipherment dataEncipherment
+                keyAgreement keyCertSign cRLSign encipherOnly decipherOnly) :
+             qw(client server email objsign reserved sslCA emailCA objCA) );
+         my $shift = ($#usages + 1) - $length; # computes the unused area in @usages
 
-     @usages = @usages[ grep { $bit & (1 << $_ - $shift) } 0 .. $#usages ]; #transfer bitmap to barewords
+         @usages = @usages[ grep { $bit & (1 << $_ - $shift) } 0 .. $#usages ]; #transfer bitmap to barewords
+     }
 
      return [ @usages ] if( $self->{_apiVersion} >= 1 );
 
